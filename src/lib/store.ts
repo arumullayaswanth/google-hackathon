@@ -50,6 +50,10 @@ export const onQuestionsSnapshot = (
   onUpdate: (questions: Question[]) => void,
   onError: (error: Error) => void
 ) => {
+  if (!db) {
+    onError(new Error("Firebase not initialized"));
+    return () => {};
+  }
   const q = query(collection(db, 'questions'), orderBy('createdAt', 'desc'));
   
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -83,6 +87,10 @@ export const onQuestionSnapshot = (
     onUpdate: (question: Question | null) => void,
     onError: (error: Error) => void
 ) => {
+    if (!db) {
+      onError(new Error("Firebase not initialized"));
+      return () => {};
+    }
     const docRef = doc(db, 'questions', id);
     
     // Increment view count
@@ -121,6 +129,7 @@ export const onQuestionSnapshot = (
 };
 
 export const addQuestion = async (question: QuestionWrite): Promise<Question> => {
+  if (!db) throw new Error("Firebase not initialized");
   const docRef = await addDoc(collection(db, 'questions'), {
     ...question,
     createdAt: serverTimestamp(),
@@ -144,6 +153,7 @@ export const addQuestion = async (question: QuestionWrite): Promise<Question> =>
 
 
 export const addAnswer = async (questionId: string, answer: AnswerWrite): Promise<Answer> => {
+    if (!db) throw new Error("Firebase not initialized");
     const questionRef = doc(db, 'questions', questionId);
     const answerCol = collection(questionRef, 'answers');
 
@@ -170,6 +180,7 @@ export const addAnswer = async (questionId: string, answer: AnswerWrite): Promis
 
 
 export const getLeaderboard = async (): Promise<User[]> => {
+    if (!db) return [];
     const usersCol = collection(db, 'users');
     const q = query(usersCol, orderBy('score', 'desc'));
     const querySnapshot = await getDocs(q);
@@ -181,6 +192,7 @@ export const getLeaderboard = async (): Promise<User[]> => {
 };
 
 export const getMentors = async (): Promise<User[]> => {
+    if (!db) return [];
     const usersCol = collection(db, 'users');
     const q = query(usersCol, where('isMentor', '==', true), orderBy('displayName', 'asc'));
     let querySnapshot = await getDocs(q);
@@ -198,6 +210,7 @@ export const getMentors = async (): Promise<User[]> => {
 }
 
 export const getUserProfile = async (uid: string): Promise<User | null> => {
+    if (!db) return null;
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -207,6 +220,7 @@ export const getUserProfile = async (uid: string): Promise<User | null> => {
 }
 
 export const createUserProfile = async (user: User): Promise<void> => {
+    if (!db) throw new Error("Firebase not initialized");
     const userRef = doc(db, 'users', user.uid);
     await runTransaction(db, async (transaction) => {
         const sfDoc = await transaction.get(userRef);
@@ -224,6 +238,7 @@ export const createUserProfile = async (user: User): Promise<void> => {
 
 // Data seeding function
 async function seedInitialData() {
+    if (!db) throw new Error("Firebase not initialized");
     console.log("Checking if seeding is needed...");
     const questionsQuery = query(collection(db, 'questions'));
     const questionsSnapshot = await getDocs(questionsQuery);
@@ -310,6 +325,7 @@ export const handleVote = async (
   voteType: 'up' | 'down',
   questionId?: string
 ) => {
+  if (!db) throw new Error("Firebase not initialized");
   const docRef = questionId 
     ? doc(db, 'questions', questionId, 'answers', docId) 
     : doc(db, 'questions', docId);
@@ -367,6 +383,13 @@ export const handleVote = async (
 };
 
 export const getAnalyticsData = async (): Promise<AnalyticsData> => {
+    if (!db) return {
+      totalQuestions: 0,
+      totalAnswers: 0,
+      totalUsers: 0,
+      totalAiAnswers: 0,
+      tagCounts: {},
+    };
     const questionsSnapshot = await getDocs(collection(db, 'questions'));
     const usersSnapshot = await getDocs(collection(db, 'users'));
     const answersSnapshot = await getDocs(collectionGroup(db, 'answers'));
@@ -402,6 +425,7 @@ export const getAnalyticsData = async (): Promise<AnalyticsData> => {
 };
 
 export const uploadImage = async (file: File): Promise<string> => {
+    if (!storage) throw new Error("Firebase Storage not initialized");
     const storageRef = ref(storage, `question-images/${Date.now()}-${file.name}`);
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
@@ -409,6 +433,7 @@ export const uploadImage = async (file: File): Promise<string> => {
 };
 
 export const getQuestionsWithImages = async (): Promise<Question[]> => {
+    if (!db) return [];
     const q = query(
         collection(db, 'questions'), 
         where('imageUrl', '!=', null),

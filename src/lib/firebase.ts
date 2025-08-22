@@ -1,5 +1,5 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
@@ -16,28 +16,32 @@ const firebaseConfig = {
   measurementId: ""
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-const storage = getStorage(app);
+// Initialize Firebase safely
+const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : getApps().length > 0 ? getApp() : null;
 
-// Enable offline persistence
-try {
-  enableIndexedDbPersistence(db)
-    .then(() => {
-      console.log("Firebase offline persistence enabled.");
-    })
-    .catch((err) => {
-      if (err.code == 'failed-precondition') {
-        console.warn("Firebase persistence failed: multiple tabs open.");
-      } else if (err.code == 'unimplemented') {
-        console.log("Firebase persistence is not available in this browser.");
+const db = app ? getFirestore(app) : null;
+const auth = app ? getAuth(app) : null;
+const storage = app ? getStorage(app) : null;
+const googleProvider = app ? new GoogleAuthProvider() : null;
+
+
+// Enable offline persistence only on the client and if db is initialized
+if (db && typeof window !== 'undefined') {
+    try {
+        enableIndexedDbPersistence(db)
+          .then(() => {
+            console.log("Firebase offline persistence enabled.");
+          })
+          .catch((err) => {
+            if (err.code == 'failed-precondition') {
+              console.warn("Firebase persistence failed: multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+              console.log("Firebase persistence is not available in this browser.");
+            }
+          });
+      } catch(e) {
+          console.error("Error enabling persistence", e);
       }
-    });
-} catch(e) {
-    console.error("Error enabling persistence", e);
 }
 
 

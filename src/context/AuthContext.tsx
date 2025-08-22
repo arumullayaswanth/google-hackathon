@@ -21,6 +21,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         let userProfile = await getUserProfile(firebaseUser.uid);
@@ -45,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signInWithGoogle = async () => {
+    if (!auth || !googleProvider) return;
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
@@ -57,6 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (!auth) return;
     setLoading(true);
     try {
       await firebaseSignOut(auth);
