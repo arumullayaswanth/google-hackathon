@@ -1,3 +1,4 @@
+
 import { PrizesInfo } from '@/components/prizes/PrizesInfo';
 import { AppShell } from '@/components/layout/AppShell';
 import { Suspense } from 'react';
