@@ -1,5 +1,9 @@
-# Firebase Studio
+# Idea: Smart Community Q&A App (with AI + Firebase)
 
-This is a NextJS starter in Firebase Studio.
+# 🔗 Project Links
 
-To get started, take a look at src/app/page.tsx.
+🌐 **Live App:** <https://lnkd.in/gftH7GAc>
+
+💻 **GitHub Repo:** <https://lnkd.in/gq-ac-tf>
+
+📝 **Blog Writeup:** <https://lnkd.in/gjQvBKtD>
